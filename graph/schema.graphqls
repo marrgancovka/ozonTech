@@ -1,0 +1,47 @@
+directive @auth on FIELD_DEFINITION
+
+type Post {
+    id: ID!
+    userID: ID!
+    title: String!
+    content: String!
+    commentsAllowed: Boolean!
+    comments: [Comment!]!
+}
+
+type Comment {
+    id: ID!
+    postID: ID!
+    userID: ID!
+    parentCommentID: ID
+    childComments: [Comment]
+    content: String!
+}
+
+type User {
+    id: ID!
+    name: String!
+    password: String!
+}
+
+type Query {
+    posts: [Post!]!
+    post(id: ID!): Post
+}
+
+type Mutation {
+    createPost(title: String!, content: String!, commentsAllowed: Boolean!): Post!
+    createComment(postID: ID!, parentID: ID, content: String!): Comment!
+    register(name: String!, password: String!): String!
+    login(name: String!, password: String!): String!
+
+}
+
+type Subscription {
+    commentAdded(postID: ID!): Comment!
+}
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}
