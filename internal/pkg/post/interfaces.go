@@ -1,8 +1,14 @@
 package post
 
-import "ozonTech/internal/models"
+import (
+	"ozonTech/graph/model"
+	"ozonTech/internal/models"
+)
 
 type PostUsecase interface {
+	GetAllPosts() ([]*model.Post, error)
+	GetPostByID(id int) (*model.Post, error)
+	CreatePost(post *models.PostCreateData) (*model.Post, error)
 }
 
 type PostRepository interface {

@@ -15,17 +15,13 @@ import (
 
 // CreatePost is the resolver for the createPost field.
 func (r *mutationResolver) CreatePost(ctx context.Context, title string, content string, commentsAllowed bool) (*model.Post, error) {
-	fmt.Println("tut")
-	post, err := r.PostUsecase.CreatePost(&models.PostCreateData{
+
+	return r.PostUsecase.CreatePost(&models.PostCreateData{
 		Title:           title,
 		Content:         content,
 		CommentsAllowed: commentsAllowed,
 		UserID:          1, // Здесь используйте реальный userID из контекста или другого источника
 	})
-	if err != nil {
-		return nil, err
-	}
-	return ConvertToGraphQLPost(post), nil
 }
 
 // CreateComment is the resolver for the createComment field.
@@ -41,16 +37,12 @@ func (r *mutationResolver) CreateComment(ctx context.Context, postID string, par
 			return nil, errors.New("invalid parent comment id")
 		}
 	}
-	comment, err := r.CommentUsecase.CreateComment(&models.CommentCreateData{
+	return r.CommentUsecase.CreateComment(&models.CommentCreateData{
 		PostID:          int(intPostID),
 		ParentCommentID: int(intParentCommentID),
 		Text:            content,
 		UserID:          1, // Здесь используйте реальный userID из контекста или другого источника
 	})
-	if err != nil {
-		return nil, err
-	}
-	return ConvertToGraphQLComment(comment), nil
 }
 
 // Register is the resolver for the register field.
@@ -82,7 +74,7 @@ func (r *queryResolver) Posts(ctx context.Context) ([]*model.Post, error) {
 
 	var gqlPosts []*model.Post
 	for _, post := range posts {
-		gqlPosts = append(gqlPosts, ConvertToGraphQLPost(post))
+		gqlPosts = append(gqlPosts, post)
 	}
 
 	return gqlPosts, nil
@@ -95,12 +87,7 @@ func (r *queryResolver) Post(ctx context.Context, id string) (*model.Post, error
 		return nil, fmt.Errorf("invalid post ID")
 	}
 
-	post, err := r.PostUsecase.GetPostByID(intID)
-	if err != nil {
-		return nil, err
-	}
-
-	return ConvertToGraphQLPost(post), nil
+	return r.PostUsecase.GetPostByID(intID)
 }
 
 // CommentAdded is the resolver for the commentAdded field.
@@ -142,49 +129,3 @@ func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionRes
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func ConvertToGraphQLPost(post *models.Post) *model.Post {
-	return &model.Post{
-		ID:              strconv.Itoa(post.ID),
-		Title:           post.Title,
-		Content:         post.Content,
-		CommentsAllowed: post.CommentsAllowed,
-		UserID:          strconv.Itoa(post.UserID),
-		Comments:        ConvertToGraphQLComments(post.Comments),
-	}
-}
-func ConvertToGraphQLComment(comment *models.Comment) *model.Comment {
-	var parentCommentID *string
-	if comment.ParentCommentID != 0 {
-		idStr := strconv.Itoa(comment.ParentCommentID)
-		parentCommentID = &idStr
-	}
-	var childComments []*model.Comment
-	for _, childID := range comment.ChildComments {
-		childComment := &model.Comment{
-			ID: strconv.Itoa(childID),
-		}
-		childComments = append(childComments, childComment)
-	}
-	return &model.Comment{
-		ID:              strconv.Itoa(comment.ID),
-		Content:         comment.Text,
-		PostID:          strconv.Itoa(comment.PostID),
-		UserID:          strconv.Itoa(comment.UserID),
-		ParentCommentID: parentCommentID,
-		ChildComments:   childComments,
-	}
-}
-func ConvertToGraphQLComments(comments []*models.Comment) []*model.Comment {
-	var gqlComments []*model.Comment
-	for _, comment := range comments {
-		gqlComments = append(gqlComments, ConvertToGraphQLComment(comment))
-	}
-	return gqlComments
-}

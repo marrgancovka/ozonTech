@@ -2,8 +2,9 @@ package middleware
 
 import (
 	"context"
+	"github.com/sirupsen/logrus"
 	"net/http"
-	"ozonTech/internal/pkg/auth/usecase"
+	"ozonTech/internal/utils"
 )
 
 type contextKey string
@@ -13,28 +14,30 @@ const (
 	userContextKey      contextKey = "userID"
 )
 
-func AuthMiddleware(authUsecase *usecase.AuthUsecase) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.Method == http.MethodPost {
-				tokenStr := r.Header.Get(authorizationHeader)
-				if tokenStr != "" {
-					claims, err := authUsecase.VerifyJWT(tokenStr)
-					if err != nil {
-						http.Error(w, "invalid or expired token", http.StatusUnauthorized)
-						return
-					}
+func AuthMiddleware(next http.Handler, log *logrus.Logger) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			log.Info("Method not allowed for authentication")
+			return
+		}
+		token := r.Header.Get("Authorization")
+		claims, err := utils.ParseToken(token)
+		if err != nil {
+			log.Error("Error parsing token: ", err.Error())
+			http.Error(w, "missing auth token", http.StatusUnauthorized)
+			return
+		}
+		id, err := utils.ParseClaims(claims)
+		if err != nil {
+			log.Error("Error parsing claims: ", err.Error())
+			http.Error(w, "missing auth token", http.StatusUnauthorized)
+			return
+		}
+		ctx := context.WithValue(r.Context(), userContextKey, id)
+		r = r.WithContext(ctx)
 
-					ctx := context.WithValue(r.Context(), userContextKey, claims.UserID)
-					r = r.WithContext(ctx)
-				} else {
-					http.Error(w, "missing auth token", http.StatusUnauthorized)
-					return
-				}
-			}
-			next.ServeHTTP(w, r)
-		})
-	}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // GetUserIDFromContext извлекает UserID из контекста

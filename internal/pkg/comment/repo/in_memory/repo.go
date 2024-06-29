@@ -2,7 +2,9 @@ package in_memory
 
 import (
 	"fmt"
+	"ozonTech/graph/model"
 	"ozonTech/internal/models"
+	"strconv"
 	"sync"
 )
 
@@ -17,17 +19,51 @@ func NewInMemoryCommentRepo() *InMemoryCommentRepo {
 	}
 }
 
-func (r *InMemoryCommentRepo) GetByPostID(postID int) ([]*models.Comment, error) {
+func (r *InMemoryCommentRepo) GetByPostID(postID int) ([]*model.Comment, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	var comments []*models.Comment
+	var rootComments []*models.Comment
 	for _, comment := range r.comments {
-		if comment.PostID == postID {
-			comments = append(comments, comment)
+		if comment.PostID == postID && comment.ParentCommentID == 0 {
+			rootComments = append(rootComments, comment)
 		}
 	}
+
+	var comments []*model.Comment
+	for _, rootComment := range rootComments {
+		comments = append(comments, convertToModelComment(rootComment, r))
+	}
+
+	fmt.Println(comments[0])
+
 	return comments, nil
+}
+
+func convertToModelComment(comment *models.Comment, r *InMemoryCommentRepo) *model.Comment {
+	parentID := ""
+	if comment.ParentCommentID != 0 {
+		parentID = strconv.Itoa(comment.ParentCommentID)
+	}
+	modelComment := &model.Comment{
+		ID:              strconv.Itoa(comment.ID),
+		PostID:          strconv.Itoa(comment.PostID),
+		UserID:          strconv.Itoa(comment.UserID),
+		Content:         comment.Text,
+		ParentCommentID: &parentID,
+	}
+
+	var childComments []*model.Comment
+	for _, childID := range comment.ChildComments {
+		for _, c := range r.comments {
+			if c.ID == childID {
+				childComments = append(childComments, convertToModelComment(c, r))
+			}
+		}
+	}
+	modelComment.ChildComments = childComments
+
+	return modelComment
 }
 
 func (r *InMemoryCommentRepo) Create(comment *models.CommentCreateData) (*models.Comment, error) {
@@ -50,6 +86,6 @@ func (r *InMemoryCommentRepo) Create(comment *models.CommentCreateData) (*models
 	if newComment.ParentCommentID != 0 {
 		r.comments[newComment.ParentCommentID].ChildComments = append(r.comments[newComment.ParentCommentID].ChildComments, newComment.ID)
 	}
-	fmt.Println(newComment.ParentCommentID)
+	fmt.Println(r.comments[newComment.ParentCommentID])
 	return newComment, nil
 }
