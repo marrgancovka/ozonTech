@@ -134,13 +134,23 @@ mutation {
 ### Просмотр одного поста с комментариями
 Пример запроса:
 ```makefile
-### Создание комментария
-Пример запроса:
-```makefile
-mutation {
-  createComment(postID: 1, parentID: 0, content: "Спасибо за первый пост") {
+{
+  post(id:1){
     id
+    title
     content
+    comments {
+      id
+      content
+      parentCommentID
+      childComments{
+        id
+        content
+        parentCommentID
+        postID
+        userID
+      }
+    }
   }
 }
 ```
