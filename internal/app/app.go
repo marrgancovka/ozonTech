@@ -14,12 +14,16 @@ import (
 	"ozonTech/graph"
 	"ozonTech/internal/pkg/auth"
 	repoAuthInmemory "ozonTech/internal/pkg/auth/repo/in-memory"
+	repoAuthPostgres "ozonTech/internal/pkg/auth/repo/postgres"
 	usecaseAuth "ozonTech/internal/pkg/auth/usecase"
 	"ozonTech/internal/pkg/comment"
 	repoCommentInmemory "ozonTech/internal/pkg/comment/repo/in_memory"
+	repoCommentPostgres "ozonTech/internal/pkg/comment/repo/postgres"
 	usecaseComment "ozonTech/internal/pkg/comment/usecase"
+	"ozonTech/internal/pkg/middleware"
 	"ozonTech/internal/pkg/post"
 	repoPostInmemory "ozonTech/internal/pkg/post/repo/in_memory"
+	repoPostPostgres "ozonTech/internal/pkg/post/repo/postgres"
 	usecasePost "ozonTech/internal/pkg/post/usecase"
 )
 
@@ -57,10 +61,16 @@ func (a *App) Run() error {
 			os.Getenv("DB_NAME")))
 		if err != nil {
 			a.logger.Error("failed to connect database " + err.Error())
+			break
 		}
+
+		postRepo = repoPostPostgres.NewPostRepository(db)
+		commentRepo = repoCommentPostgres.NewCommentRepository(db)
+		authRepo = repoAuthPostgres.NewAuthRepository(db)
 
 		if err = db.Ping(); err != nil {
 			a.logger.Error("failed to ping database " + err.Error())
+			return err
 		}
 		defer db.Close()
 		a.logger.Info("successfully connected to database")
@@ -77,14 +87,18 @@ func (a *App) Run() error {
 		port = "8080"
 	}
 
-	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
+	resolver := &graph.Resolver{
 		PostUsecase:    postUsecase,
 		CommentUsecase: commentUsecase,
 		AuthUsecase:    authUsecase,
-	}}))
+	}
+	c := graph.Config{Resolvers: resolver}
+	c.Directives.Auth = middleware.AuthDirective
+
+	srv := handler.NewDefaultServer(graph.NewExecutableSchema(c))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	http.Handle("/query", middleware.AuthMiddleware(srv, a.logger))
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))

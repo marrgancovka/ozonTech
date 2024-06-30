@@ -10,17 +10,21 @@ import (
 	"fmt"
 	"ozonTech/graph/model"
 	"ozonTech/internal/models"
+	"ozonTech/internal/pkg/middleware"
 	"strconv"
 )
 
 // CreatePost is the resolver for the createPost field.
 func (r *mutationResolver) CreatePost(ctx context.Context, title string, content string, commentsAllowed bool) (*model.Post, error) {
-
+	id, ok := middleware.GetUserIDFromContext(ctx)
+	if !ok {
+		return nil, errors.New("id user not found")
+	}
 	return r.PostUsecase.CreatePost(&models.PostCreateData{
 		Title:           title,
 		Content:         content,
 		CommentsAllowed: commentsAllowed,
-		UserID:          1, // Здесь используйте реальный userID из контекста или другого источника
+		UserID:          id,
 	})
 }
 
@@ -37,20 +41,22 @@ func (r *mutationResolver) CreateComment(ctx context.Context, postID string, par
 			return nil, errors.New("invalid parent comment id")
 		}
 	}
+	id, ok := middleware.GetUserIDFromContext(ctx)
+	if !ok {
+		return nil, errors.New("id user not found")
+	}
 	return r.CommentUsecase.CreateComment(&models.CommentCreateData{
 		PostID:          int(intPostID),
 		ParentCommentID: int(intParentCommentID),
 		Text:            content,
-		UserID:          1, // Здесь используйте реальный userID из контекста или другого источника
+		UserID:          id,
 	})
 }
 
 // Register is the resolver for the register field.
 func (r *mutationResolver) Register(ctx context.Context, name string, password string) (string, error) {
-	fmt.Println("В резолвере")
 	token, err := r.AuthUsecase.SignUp(name, password)
 	if err != nil {
-		fmt.Println("ошибка тут не равана нил")
 		return "", err
 	}
 	return token, nil

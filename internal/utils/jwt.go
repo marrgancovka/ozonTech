@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"os"
-	"strconv"
 	"time"
 )
 
 func GenerateJWT(userID int) (string, error) {
-	expirationTime := time.Now().Add(24 * time.Hour)
+	exp := time.Now().Add(time.Hour * 24)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":  userID,
-		"exp": expirationTime.Unix(),
+		"exp": exp.Unix(),
 	})
 	tokenStr, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
@@ -36,14 +35,11 @@ func ParseClaims(claims *jwt.Token) (int, error) {
 	if !ok {
 		return 0, errors.New("invalid claims")
 	}
-	idStr, ok := payloadMap["id"].(string)
+	idFloat, ok := payloadMap["id"].(float64)
 	if !ok {
-		return 0, errors.New("incorrect id")
+		return 0, errors.New("incorrect id int")
 	}
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		return 0, errors.New("incorrect id")
-	}
+	id := int(idFloat)
 
 	return id, nil
 }

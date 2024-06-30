@@ -1,6 +1,8 @@
 package usecase
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"github.com/dgrijalva/jwt-go"
 	"ozonTech/internal/pkg/auth"
 	"ozonTech/internal/utils"
@@ -24,7 +26,7 @@ type Claims struct {
 
 func (u *AuthUsecase) Login(name, password string) (string, error) {
 	// Проверка пользователя в репозитории
-	id, err := u.authRepo.CheckUser(name, password)
+	id, err := u.authRepo.CheckUser(name, hashString(password))
 	if err != nil {
 		return "", err
 	}
@@ -37,7 +39,7 @@ func (u *AuthUsecase) Login(name, password string) (string, error) {
 }
 
 func (u *AuthUsecase) SignUp(name, password string) (string, error) {
-	id, err := u.authRepo.CreateUser(name, password)
+	id, err := u.authRepo.CreateUser(name, hashString(password))
 	if err != nil {
 		return "", err
 	}
@@ -47,4 +49,14 @@ func (u *AuthUsecase) SignUp(name, password string) (string, error) {
 		return "", err
 	}
 	return token, nil
+}
+
+func hashString(input string) string {
+	hasher := sha256.New()
+	hasher.Write([]byte(input))
+
+	hashedBytes := hasher.Sum(nil)
+	hashedString := hex.EncodeToString(hashedBytes)
+
+	return hashedString
 }

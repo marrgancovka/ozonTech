@@ -35,8 +35,6 @@ func (r *InMemoryCommentRepo) GetByPostID(postID int) ([]*model.Comment, error) 
 		comments = append(comments, convertToModelComment(rootComment, r))
 	}
 
-	fmt.Println(comments[0])
-
 	return comments, nil
 }
 

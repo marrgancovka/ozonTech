@@ -30,8 +30,8 @@ type Query {
 }
 
 type Mutation {
-    createPost(title: String!, content: String!, commentsAllowed: Boolean!): Post!
-    createComment(postID: ID!, parentID: ID, content: String!): Comment!
+    createPost(title: String!, content: String!, commentsAllowed: Boolean!): Post! @auth
+    createComment(postID: ID!, parentID: ID, content: String!): Comment! @auth
     register(name: String!, password: String!): String!
     login(name: String!, password: String!): String!
 
