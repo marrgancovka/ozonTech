@@ -2,7 +2,6 @@ package app
 
 import (
 	"database/sql"
-	"flag"
 	"fmt"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -38,9 +37,7 @@ func NewApp(logger *logrus.Logger) *App {
 func (a *App) Run() error {
 	_ = godotenv.Load()
 
-	var storageType string
-	flag.StringVar(&storageType, "storage", "in-memory", "storage type (in-memory or postgres)")
-	flag.Parse()
+	storageType := os.Getenv("STORAGE")
 
 	var postRepo post.PostRepository
 	var commentRepo comment.CommentRepository

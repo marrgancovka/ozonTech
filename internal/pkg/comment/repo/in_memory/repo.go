@@ -1,7 +1,6 @@
 package in_memory
 
 import (
-	"fmt"
 	"ozonTech/graph/model"
 	"ozonTech/internal/models"
 	"strconv"
@@ -77,13 +76,9 @@ func (r *InMemoryCommentRepo) Create(comment *models.CommentCreateData) (*models
 		Text:            comment.Text,
 	}
 
-	fmt.Println(newComment)
-
 	r.comments[newComment.ID] = newComment
-	fmt.Println(newComment.ID)
 	if newComment.ParentCommentID != 0 {
 		r.comments[newComment.ParentCommentID].ChildComments = append(r.comments[newComment.ParentCommentID].ChildComments, newComment.ID)
 	}
-	fmt.Println(r.comments[newComment.ParentCommentID])
 	return newComment, nil
 }

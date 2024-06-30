@@ -98,29 +98,7 @@ func (r *queryResolver) Post(ctx context.Context, id string) (*model.Post, error
 
 // CommentAdded is the resolver for the commentAdded field.
 func (r *subscriptionResolver) CommentAdded(ctx context.Context, postID string) (<-chan *model.Comment, error) {
-	// Создаем канал для передачи комментариев
-	commentChan := make(chan *model.Comment)
-
-	// Пример реализации логики подписки
-	go func() {
-		defer close(commentChan)
-
-		// Здесь может быть ваша логика для подписки на новые комментарии к посту с указанным postID
-		// Например, использование Pub/Sub системы или реализация логики для отслеживания новых комментариев
-
-		// В примере мы просто создаем фиктивный комментарий и отправляем его в канал
-		fakeComment := &model.Comment{
-			ID:      "1", // Замените на реальный ID комментария
-			Content: "New comment",
-			PostID:  postID,
-			UserID:  "1", // Замените на реальный ID пользователя
-		}
-
-		// Отправляем фиктивный комментарий в канал
-		commentChan <- fakeComment
-	}()
-
-	return commentChan, nil
+	panic(fmt.Errorf("not implemented: CommentAdded - commentAdded"))
 }
 
 // Mutation returns MutationResolver implementation.

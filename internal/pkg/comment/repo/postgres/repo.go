@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"database/sql"
-	"fmt"
 	"ozonTech/graph/model"
 	"ozonTech/internal/models"
 	"strconv"
@@ -35,10 +34,7 @@ func (r *CommentRepositoryImpl) GetByPostID(postID int) ([]*model.Comment, error
 		if err := rows.Scan(&comment.ID, &comment.PostID, &comment.UserID, &comment.Text, &comment.ParentCommentID, &childComments); err != nil {
 			return nil, err
 		}
-		fmt.Println(string(childComments), "---")
 		comment.ChildComments = decodeChildComments(string(childComments))
-		fmt.Println("111", comment.ChildComments)
-		fmt.Println(comment.ChildComments)
 		rootComments = append(rootComments, &comment)
 	}
 
@@ -104,8 +100,6 @@ func (r *CommentRepositoryImpl) GetCommentByID(id int) (*models.Comment, error) 
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(comment.ChildComments, id)
-
 	comment.ChildComments = decodeChildComments(string(childComments))
 	return &comment, nil
 }

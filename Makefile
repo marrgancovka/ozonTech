@@ -1,8 +1,8 @@
 include .env
 
-.PHONY: lint
-lint:
-	golangci-lint run --config=.golangci.yaml
+DOCKER_COMPOSE_FILE=docker-compose.yaml
+IN_MEMORY_ENV_FILE=.env.inmemory
+POSTGRES_ENV_FILE=.env.postgres
 
 test:
 	go test -race ./...
@@ -16,11 +16,13 @@ migrate-up: migrate-lib
 migrate-down:
 	migrate -path schema -database "postgres://$(DB_USER):$(DB_PASS)@localhost:$(DB_PORT)/$(DB_NAME)?sslmode=disable" down
 
-compose-build:
-	docker-compose build
+start:
+	docker compose build
+	docker compose up -d
 
-compose-up:
-	docker-compose up -d
+start:
+	docker compose build
+	docker compose up -d
 
-compose-down:
+stop:
 	docker-compose down

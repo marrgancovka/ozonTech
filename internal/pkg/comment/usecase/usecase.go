@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"errors"
-	"fmt"
 	"ozonTech/graph/model"
 	"ozonTech/internal/models"
 	"ozonTech/internal/pkg/comment"
@@ -18,7 +17,6 @@ func NewCommentUsecase(repo comment.CommentRepository) *CommentUsecase {
 }
 
 func (u *CommentUsecase) GetCommentsByPostID(postID int) ([]*model.Comment, error) {
-	fmt.Println(u.repo.GetByPostID(postID))
 	return u.repo.GetByPostID(postID)
 }
 

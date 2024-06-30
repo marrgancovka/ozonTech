@@ -20,7 +20,7 @@ services:
     container_name: mainService
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: ./build/main.Dockerfile
     ports:
       - '8080:8080'
     env_file:

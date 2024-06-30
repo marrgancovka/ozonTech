@@ -9,7 +9,7 @@ RUN go clean --modcache
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -mod=readonly -o ./.bin ./cmd/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -mod=readonly -o ./.bin ./cmd/main/main.go
 
 FROM alpine AS runner
 
